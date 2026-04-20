@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -32,7 +34,7 @@ app.UseCors("AllowAll");
 // Routing API
 app.MapControllers();
 
-// 🔥 FIX PORT (penting buat Railway & lokal)
+// 🔥 FIX PORT (Railway + lokal)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
