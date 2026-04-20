@@ -1,3 +1,5 @@
+using Syngenta.API.Models;
+
 [HttpPost]
 public async Task<IActionResult> Post([FromBody] ScanResultDto data)
 {
