@@ -1,20 +1,19 @@
-// ✅ POST DATA (UNTUK TERIMA DARI SCANNER)
+using Microsoft.AspNetCore.Mvc;
+using Npgsql;
+using ClosedXML.Excel;
+
+namespace Syngenta.API.Controllers;
+
+
 [HttpPost]
-public async Task<IActionResult> Post([FromBody] object data)
+public async Task<IActionResult> Post([FromBody] dynamic data)
 {
     try
     {
-        var json = System.Text.Json.JsonSerializer.Serialize(data);
-        var doc = System.Text.Json.JsonDocument.Parse(json);
-
-        var root = doc.RootElement;
-
-        var time = root.GetProperty("timestamp").GetDateTime();
-        var camera = root.GetProperty("cameraId").GetString();
-        var qr = root.TryGetProperty("qrCode", out var qrProp) && qrProp.ValueKind != System.Text.Json.JsonValueKind.Null
-            ? qrProp.GetString()
-            : null;
-        var status = root.GetProperty("status").GetString();
+        DateTime time = data.timestamp;
+        string camera = data.cameraId;
+        string qr = data.qrCode;
+        string status = data.status;
 
         await using var conn = new NpgsqlConnection(_conn);
         await conn.OpenAsync();
@@ -31,7 +30,7 @@ public async Task<IActionResult> Post([FromBody] object data)
 
         await cmd.ExecuteNonQueryAsync();
 
-        return Ok("Saved from API");
+        return Ok("Saved");
     }
     catch (Exception ex)
     {
