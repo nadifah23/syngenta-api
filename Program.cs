@@ -1,8 +1,5 @@
 var builder = WebApplication.CreateBuilder(args);
 
-// ✅ ambil connection string dari Railway ENV
-var conn = builder.Configuration.GetConnectionString("Default");
-
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -14,12 +11,9 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// 👉 kalau kamu pakai DatabaseService, bisa inject di sini
-// builder.Services.AddSingleton(new DatabaseService(conn));
-
 var app = builder.Build();
 
-// 🔥 default index.html
+// 🔥 default ke index.html
 app.UseDefaultFiles(new DefaultFilesOptions
 {
     DefaultFileNames = new List<string> { "index.html" }
@@ -34,7 +28,7 @@ app.UseCors("AllowAll");
 // Routing API
 app.MapControllers();
 
-// 🔥 FIX WAJIB BUAT RAILWAY (JANGAN HARDCODE 5000)
+// 🔥 FIX PORT (penting buat Railway & lokal)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 

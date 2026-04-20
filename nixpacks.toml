@@ -1,5 +1,6 @@
 [phases.build]
 cmds = [
+  "dotnet nuget locals all --clear",
   "dotnet restore Syngenta.API.csproj",
   "dotnet publish Syngenta.API.csproj -c Release -o out"
 ]

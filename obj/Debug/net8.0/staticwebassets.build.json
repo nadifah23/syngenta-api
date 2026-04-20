@@ -1,0 +1,39 @@
+{
+  "Version": 1,
+  "Hash": "XkXbs9o9sFNctYydvs1wR0Mg0FESN2ZabqEZQ+U6NOI=",
+  "Source": "Syngenta.API",
+  "BasePath": "_content/Syngenta.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "Syngenta.API\\wwwroot",
+      "Source": "Syngenta.API",
+      "ContentRoot": "C:\\Users\\Fadiah Arika\\OneDrive\\Documents\\Syngenta.API\\wwwroot\\",
+      "BasePath": "_content/Syngenta.API",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\Fadiah Arika\\OneDrive\\Documents\\Syngenta.API\\wwwroot\\index.html",
+      "SourceId": "Syngenta.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\Fadiah Arika\\OneDrive\\Documents\\Syngenta.API\\wwwroot\\",
+      "BasePath": "_content/Syngenta.API",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    }
+  ]
+}

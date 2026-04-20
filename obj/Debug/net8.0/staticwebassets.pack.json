@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\Fadiah Arika\\OneDrive\\Documents\\Syngenta.API\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.Syngenta.API.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.Syngenta.API.props",
+      "PackagePath": "build\\Syngenta.API.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.Syngenta.API.props",
+      "PackagePath": "buildMultiTargeting\\Syngenta.API.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.Syngenta.API.props",
+      "PackagePath": "buildTransitive\\Syngenta.API.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
