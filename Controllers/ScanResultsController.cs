@@ -55,8 +55,37 @@ public class ScanResultsController : ControllerBase
 
     // ✅ GET TEST
     [HttpGet]
-    public IActionResult Test()
+    public async Task<IActionResult> Get()
+{
+    try
     {
-        return Ok("API OK");
+        var list = new List<object>();
+
+        await using var conn = new NpgsqlConnection(_conn);
+        await conn.OpenAsync();
+
+        var sql = "SELECT id, scan_time, camera_id, qr_code, status FROM scan_results ORDER BY id DESC";
+
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            list.Add(new
+            {
+                id = reader.GetInt32(0),
+                time = reader.GetDateTime(1),
+                camera = reader.GetString(2),
+                qr = reader.IsDBNull(3) ? null : reader.GetString(3),
+                status = reader.GetString(4)
+            });
+        }
+
+        return Ok(list);
     }
+    catch (Exception ex)
+    {
+        return StatusCode(500, ex.Message);
+    }
+}
 }
