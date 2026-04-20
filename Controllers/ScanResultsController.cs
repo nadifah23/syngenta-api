@@ -10,7 +10,7 @@ namespace Syngenta.API.Controllers;
 public class ScanResultsController : ControllerBase
 {
     private readonly string _conn =
-        "Host=...;Port=5432;Database=postgres;Username=postgres;Password=...;SSL Mode=Require;Trust Server Certificate=true;";
+        "Host=db.viunjccoqeefdeakqqwg.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=Projectsyngenta23.;SSL Mode=Require;Trust Server Certificate=true;Timeout=15;CommandTimeout=15;";
 
     // ✅ POST
     [HttpPost]
@@ -18,6 +18,12 @@ public class ScanResultsController : ControllerBase
     {
         try
         {
+            Console.WriteLine("📥 DATA MASUK:");
+            Console.WriteLine($"time: {data.timestamp}");
+            Console.WriteLine($"camera: {data.cameraId}");
+            Console.WriteLine($"qr: {data.qrCode}");
+            Console.WriteLine($"status: {data.status}");
+
             await using var conn = new NpgsqlConnection(_conn);
             await conn.OpenAsync();
 
@@ -33,15 +39,21 @@ public class ScanResultsController : ControllerBase
 
             await cmd.ExecuteNonQueryAsync();
 
+            Console.WriteLine("✅ BERHASIL INSERT DB");
+
             return Ok("Saved");
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            // 🔥 INI YANG PALING PENTING
+            Console.WriteLine("❌ ERROR API:");
+            Console.WriteLine(ex.ToString());
+
+            return StatusCode(500, ex.ToString());
         }
     }
 
-    // ✅ GET tetap ada
+    // ✅ GET TEST
     [HttpGet]
     public IActionResult Test()
     {
