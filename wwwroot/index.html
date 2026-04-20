@@ -5,7 +5,6 @@
     <style>
         body { font-family: Arial; padding: 20px; background: #f5f5f5; }
 
-        /* 🔥 tulisan pojok kanan */
         .top-right {
             position: absolute;
             top: 20px;
@@ -53,7 +52,6 @@
 </head>
 <body>
 
-<!-- 🔥 tulisan pojok kanan -->
 <div class="top-right">
     Institut Teknologi Sepuluh Nopember Internship 2026
 </div>
@@ -90,7 +88,7 @@ window.onload = function () {
 
 async function loadData() {
     try {
-        const res = await fetch("/api/scanresults");
+        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults");
         const data = await res.json();
 
         const tbody = document.querySelector("#table tbody");
@@ -106,7 +104,7 @@ async function loadData() {
                 color = "lightgreen";
                 match++;
             }
-            else if (status === "not_match" || status === "not match") {
+            else if (status === "not match") {
                 color = "salmon";
                 notmatch++;
             }
@@ -137,11 +135,11 @@ async function loadData() {
 }
 
 function downloadCSV() {
-    window.open("/api/scanresults/export");
+    window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export");
 }
 
 function downloadExcel() {
-    window.open("/api/scanresults/export-excel");
+    window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export-excel");
 }
 </script>
 
