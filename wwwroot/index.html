@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Scanner Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+
+        /* 🔥 tulisan pojok kanan */
+        .top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 13px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .card {
+            display: inline-block;
+            padding: 15px;
+            margin-right: 10px;
+            border-radius: 10px;
+            color: white;
+            width: 150px;
+            text-align: center;
+        }
+
+        .match { background: green; }
+        .notmatch { background: red; }
+        .failed { background: gray; }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th { background-color: #eee; }
+
+        button {
+            padding: 10px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 🔥 tulisan pojok kanan -->
+<div class="top-right">
+    Institut Teknologi Sepuluh Nopember Internship 2026
+</div>
+
+<h2>QR Scanner Dashboard</h2>
+
+<button onclick="downloadCSV()">Download CSV</button>
+<button onclick="downloadExcel()">Download Excel</button>
+
+<div style="margin-top:20px;">
+    <div class="card match">MATCH<br><span id="matchCount">0</span></div>
+    <div class="card notmatch">NOT MATCH<br><span id="notMatchCount">0</span></div>
+    <div class="card failed">FAILED<br><span id="failedCount">0</span></div>
+</div>
+
+<table id="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Time</th>
+            <th>Camera</th>
+            <th>QR</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+window.onload = function () {
+    loadData();
+    setInterval(loadData, 2000);
+};
+
+async function loadData() {
+    try {
+        const res = await fetch("/api/scanresults");
+        const data = await res.json();
+
+        const tbody = document.querySelector("#table tbody");
+        tbody.innerHTML = "";
+
+        let match = 0, notmatch = 0, failed = 0;
+
+        data.forEach(item => {
+            let status = item.status?.toLowerCase();
+            let color = "";
+
+            if (status === "match") {
+                color = "lightgreen";
+                match++;
+            }
+            else if (status === "not_match" || status === "not match") {
+                color = "salmon";
+                notmatch++;
+            }
+            else {
+                color = "lightgray";
+                failed++;
+            }
+
+            const row = `
+                <tr style="background-color:${color}">
+                    <td>${item.id}</td>
+                    <td>${item.time}</td>
+                    <td>${item.camera}</td>
+                    <td>${item.qr ?? '-'}</td>
+                    <td>${item.status}</td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById("matchCount").innerText = match;
+        document.getElementById("notMatchCount").innerText = notmatch;
+        document.getElementById("failedCount").innerText = failed;
+
+    } catch (err) {
+        console.error("ERROR:", err);
+    }
+}
+
+function downloadCSV() {
+    window.open("/api/scanresults/export");
+}
+
+function downloadExcel() {
+    window.open("/api/scanresults/export-excel");
+}
+</script>
+
+</body>
+</html>

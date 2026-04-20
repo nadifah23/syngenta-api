@@ -1,0 +1,6 @@
+@Syngenta.API_HostAddress = http://localhost:5082
+
+GET {{Syngenta.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
