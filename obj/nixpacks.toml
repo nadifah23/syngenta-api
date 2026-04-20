@@ -1,5 +1,8 @@
 [phases.build]
-cmds = ["dotnet publish Syngenta.API.csproj -c Release -o out"]
+cmds = [
+  "dotnet restore Syngenta.API.csproj",
+  "dotnet publish Syngenta.API.csproj -c Release -o out"
+]
 
 [phases.start]
 cmd = "dotnet out/Syngenta.API.dll"
