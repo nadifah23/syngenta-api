@@ -1,0 +1,7 @@
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.csproj.AssemblyReference.cache
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.AssemblyInfoInputs.cache
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.AssemblyInfo.cs
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.csproj.CoreCompileInputs.cache
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Fadiah Arika\OneDrive\Documents\Syngenta.API\obj\Release\net8.0\Syngenta.API.sourcelink.json

@@ -10,7 +10,7 @@ namespace Syngenta.API.Controllers;
 public class ScanResultsController : ControllerBase
 {
     private readonly string _conn = 
-        "Host=aws-1-ap-northeast-2.pooler.supabase.com;Database=postgres;Username=postgres.viunjccoqeefdeakqqwg;Password=Projectsyngenta23.;SSL Mode=Require;Trust Server Certificate=true"
+        "Host=aws-1-ap-northeast-2.pooler.supabase.com;Database=postgres;Username=postgres.viunjccoqeefdeakqqwg;Password=Projectsyngenta23.;SSL Mode=Require;Trust Server Certificate=true";
 
     // ✅ POST
     [HttpPost]
