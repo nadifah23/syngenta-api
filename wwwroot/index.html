@@ -31,14 +31,15 @@
         table {
             border-collapse: collapse;
             width: 100%;
-            margin-top: 20px;
+            margin-top: 10px;
             background: white;
         }
 
         th, td {
             border: 1px solid #ccc;
-            padding: 8px;
+            padding: 6px;
             text-align: center;
+            font-size: 12px;
         }
 
         th { background-color: #eee; }
@@ -47,6 +48,16 @@
             padding: 10px 15px;
             margin-right: 10px;
             cursor: pointer;
+        }
+
+        .tables {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .table-box {
+            width: 33%;
         }
     </style>
 </head>
@@ -58,7 +69,7 @@
 
 <h2>QR Scanner Dashboard</h2>
 
-<!-- 🔥 UPLOAD DATASHEET -->
+<!-- 🔥 UPLOAD -->
 <input type="file" id="fileInput" />
 <button onclick="uploadFile()">Upload Datasheet</button>
 
@@ -73,18 +84,53 @@
     <div class="card failed">FAILED<br><span id="failedCount">0</span></div>
 </div>
 
-<table id="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Time</th>
-            <th>Camera</th>
-            <th>QR</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+<!-- 🔥 3 TABLE -->
+<div class="tables">
+
+    <!-- CAMERA 1 -->
+    <div class="table-box">
+        <h3>CAMERA-01</h3>
+        <table id="tableCam1">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>QR</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- CAMERA 2 -->
+    <div class="table-box">
+        <h3>CAMERA-02</h3>
+        <table id="tableCam2">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>QR</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- PAIR -->
+    <div class="table-box">
+        <h3>PAIR RESULT</h3>
+        <table id="tablePair">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>QR</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
 
 <script>
 window.onload = function () {
@@ -97,38 +143,59 @@ async function loadData() {
         const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults");
         const data = await res.json();
 
-        const tbody = document.querySelector("#table tbody");
-        tbody.innerHTML = "";
+        const cam1Body = document.querySelector("#tableCam1 tbody");
+        const cam2Body = document.querySelector("#tableCam2 tbody");
+        const pairBody = document.querySelector("#tablePair tbody");
+
+        cam1Body.innerHTML = "";
+        cam2Body.innerHTML = "";
+        pairBody.innerHTML = "";
 
         let match = 0, notmatch = 0, failed = 0;
 
         data.forEach(item => {
-            let status = item.status?.toLowerCase();
-            let color = "";
+            const time = new Date(item.time).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
 
-            if (status === "match") {
-                color = "lightgreen";
-                match++;
-            }
-            else if (status === "not match") {
-                color = "salmon";
-                notmatch++;
-            }
-            else {
-                color = "lightgray";
-                failed++;
+            if (item.camera === "CAMERA-01") {
+                cam1Body.innerHTML += `
+                    <tr>
+                        <td>${time}</td>
+                        <td>${item.qr ?? '-'}</td>
+                    </tr>
+                `;
             }
 
-            const row = `
-                <tr style="background-color:${color}">
-                    <td>${item.id}</td>
-                    <td>${new Date(item.time).toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'})}</td>
-                    <td>${item.camera}</td>
-                    <td>${item.qr ?? '-'}</td>
-                    <td>${item.status}</td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
+            else if (item.camera === "CAMERA-02") {
+                cam2Body.innerHTML += `
+                    <tr>
+                        <td>${time}</td>
+                        <td>${item.qr ?? '-'}</td>
+                    </tr>
+                `;
+            }
+
+            else if (item.camera === "PAIR") {
+                let color = "";
+
+                if (item.status === "MATCH") {
+                    color = "lightgreen";
+                    match++;
+                } else if (item.status === "NOT MATCH") {
+                    color = "salmon";
+                    notmatch++;
+                } else {
+                    color = "lightgray";
+                    failed++;
+                }
+
+                pairBody.innerHTML += `
+                    <tr style="background:${color}">
+                        <td>${time}</td>
+                        <td>${item.qr ?? '-'}</td>
+                        <td>${item.status}</td>
+                    </tr>
+                `;
+            }
         });
 
         document.getElementById("matchCount").innerText = match;
@@ -148,7 +215,7 @@ function downloadExcel() {
     window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export-excel");
 }
 
-// 🔥 FUNCTION UPLOAD
+// 🔥 UPLOAD
 async function uploadFile() {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
@@ -168,7 +235,6 @@ async function uploadFile() {
         });
 
         const text = await res.text();
-
         alert("Upload sukses: " + text);
     } catch (err) {
         console.error(err);
