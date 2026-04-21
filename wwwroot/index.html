@@ -58,6 +58,12 @@
 
 <h2>QR Scanner Dashboard</h2>
 
+<!-- 🔥 UPLOAD DATASHEET -->
+<input type="file" id="fileInput" />
+<button onclick="uploadFile()">Upload Datasheet</button>
+
+<br><br>
+
 <button onclick="downloadCSV()">Download CSV</button>
 <button onclick="downloadExcel()">Download Excel</button>
 
@@ -140,6 +146,34 @@ function downloadCSV() {
 
 function downloadExcel() {
     window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export-excel");
+}
+
+// 🔥 FUNCTION UPLOAD
+async function uploadFile() {
+    const fileInput = document.getElementById("fileInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Pilih file dulu!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const text = await res.text();
+
+        alert("Upload sukses: " + text);
+    } catch (err) {
+        console.error(err);
+        alert("Upload gagal!");
+    }
 }
 </script>
 
