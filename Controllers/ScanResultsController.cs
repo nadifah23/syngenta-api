@@ -20,12 +20,6 @@ public class ScanResultsController : ControllerBase
     {
         try
         {
-            Console.WriteLine("📥 DATA MASUK:");
-            Console.WriteLine($"time: {data.timestamp}");
-            Console.WriteLine($"camera: {data.cameraId}");
-            Console.WriteLine($"qr: {data.qrCode}");
-            Console.WriteLine($"status: {data.status}");
-
             await using var conn = new NpgsqlConnection(_conn);
             await conn.OpenAsync();
 
@@ -41,14 +35,10 @@ public class ScanResultsController : ControllerBase
 
             await cmd.ExecuteNonQueryAsync();
 
-            Console.WriteLine("✅ BERHASIL INSERT DB");
-
             return Ok("Saved");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("❌ ERROR API:");
-            Console.WriteLine(ex.ToString());
             return StatusCode(500, ex.ToString());
         }
     }
@@ -98,14 +88,10 @@ public class ScanResultsController : ControllerBase
                 seq++;
             }
 
-            Console.WriteLine("✅ UPLOAD + SEQUENCE BERHASIL");
-
             return Ok("Upload sukses + sequence");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("❌ ERROR UPLOAD:");
-            Console.WriteLine(ex.ToString());
             return StatusCode(500, ex.ToString());
         }
     }
@@ -149,7 +135,7 @@ public class ScanResultsController : ControllerBase
     }
 
     // ================================
-    // 📥 EXPORT EXCEL
+    // 📥 EXPORT EXCEL (FIX URUTAN)
     // ================================
     [HttpGet("export-excel")]
     public async Task<IActionResult> ExportExcel()
@@ -169,6 +155,7 @@ public class ScanResultsController : ControllerBase
             await using var conn = new NpgsqlConnection(_conn);
             await conn.OpenAsync();
 
+            // 🔥 PENTING: samain dengan dashboard
             var cmd = new NpgsqlCommand(
                 "SELECT id, scan_time, camera_id, qr_code, status FROM scan_results ORDER BY id DESC",
                 conn
@@ -185,8 +172,12 @@ public class ScanResultsController : ControllerBase
                 ws.Cell(row, 3).Value = reader.GetString(2);
                 ws.Cell(row, 4).Value = reader.IsDBNull(3) ? "-" : reader.GetString(3);
                 ws.Cell(row, 5).Value = reader.GetString(4);
+
                 row++;
             }
+
+            // auto width biar rapi
+            ws.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
