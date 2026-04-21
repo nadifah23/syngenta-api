@@ -54,57 +54,63 @@ public class ScanResultsController : ControllerBase
         }
     }
 
-    // ================================
-    // 🔥 UPLOAD DATASHEET (INI BARU)
-    // ================================
-    [HttpPost("upload")]
-    public async Task<IActionResult> Upload(IFormFile file)
+// ================================
+// 🔥 UPLOAD DATASHEET (FIX + SEQUENCE)
+// ================================
+[HttpPost("upload")]
+public async Task<IActionResult> Upload(IFormFile file)
+{
+    try
     {
-        try
+        if (file == null || file.Length == 0)
+            return BadRequest("File kosong");
+
+        using var stream = new MemoryStream();
+        await file.CopyToAsync(stream);
+
+        using var workbook = new XLWorkbook(stream);
+        var ws = workbook.Worksheet(1);
+
+        await using var conn = new NpgsqlConnection(_conn);
+        await conn.OpenAsync();
+
+        // 🔥 HAPUS DATA LAMA
+        var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
+        await clear.ExecuteNonQueryAsync();
+
+        int row = 2;
+        int seq = 1; // 🔥 INI KUNCI UTAMA
+
+        while (!ws.Cell(row, 1).IsEmpty())
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("File kosong");
+            var qr = ws.Cell(row, 1).GetString();
 
-            using var stream = new MemoryStream();
-            await file.CopyToAsync(stream);
+            var cmd = new NpgsqlCommand(
+                "INSERT INTO qr_references (qr_code, sequence) VALUES (@qr, @seq)",
+                conn
+            );
 
-            using var workbook = new XLWorkbook(stream);
-            var ws = workbook.Worksheet(1);
+            cmd.Parameters.AddWithValue("@qr", qr);
+            cmd.Parameters.AddWithValue("@seq", seq);
 
-            await using var conn = new NpgsqlConnection(_conn);
-            await conn.OpenAsync();
+            await cmd.ExecuteNonQueryAsync();
 
-            // 🔥 hapus data lama (biar update)
-            var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
-            await clear.ExecuteNonQueryAsync();
-
-            int row = 2;
-
-            while (!ws.Cell(row, 1).IsEmpty())
-            {
-                var qr = ws.Cell(row, 1).GetString();
-
-                var cmd = new NpgsqlCommand(
-                    "INSERT INTO qr_references (qr_code) VALUES (@qr)", conn);
-
-                cmd.Parameters.AddWithValue("@qr", qr);
-                await cmd.ExecuteNonQueryAsync();
-
-                row++;
-            }
-
-            Console.WriteLine("✅ UPLOAD DATASHEET BERHASIL");
-
-            return Ok("Upload sukses");
+            row++;
+            seq++; // 🔥 AUTO URUT
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("❌ ERROR UPLOAD:");
-            Console.WriteLine(ex.ToString());
 
-            return StatusCode(500, ex.ToString());
-        }
+        Console.WriteLine("✅ UPLOAD DATASHEET + SEQUENCE BERHASIL");
+
+        return Ok("Upload sukses + sequence");
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine("❌ ERROR UPLOAD:");
+        Console.WriteLine(ex.ToString());
+
+        return StatusCode(500, ex.ToString());
+    }
+}
 
     // ================================
     // ✅ GET DATA (DASHBOARD)
