@@ -12,9 +12,8 @@ public class ScanResultsController : ControllerBase
     private readonly string _conn =
         "Host=aws-1-ap-northeast-2.pooler.supabase.com;Database=postgres;Username=postgres.viunjccoqeefdeakqqwg;Password=Projectsyngenta23.;SSL Mode=Require;Trust Server Certificate=true";
 
-    // ================================
-    // ✅ POST SCAN RESULT
-    // ================================
+    
+    // POST SCAN RESULT
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ScanResultDto data)
     {
@@ -41,22 +40,22 @@ public class ScanResultsController : ControllerBase
 
             await cmd.ExecuteNonQueryAsync();
 
-            Console.WriteLine("✅ BERHASIL INSERT DB");
+            Console.WriteLine("BERHASIL INSERT DB");
 
             return Ok("Saved");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("❌ ERROR API:");
+            Console.WriteLine("ERROR API:");
             Console.WriteLine(ex.ToString());
 
             return StatusCode(500, ex.ToString());
         }
     }
 
-// ================================
-// 🔥 UPLOAD DATASHEET (FIX + SEQUENCE)
-// ================================
+
+// UPLOAD DATASHEET (FIX + SEQUENCE)
+
 [HttpPost("upload")]
 public async Task<IActionResult> Upload(IFormFile file)
 {
@@ -74,12 +73,12 @@ public async Task<IActionResult> Upload(IFormFile file)
         await using var conn = new NpgsqlConnection(_conn);
         await conn.OpenAsync();
 
-        // 🔥 HAPUS DATA LAMA
+        // HAPUS DATA LAMA
         var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
         await clear.ExecuteNonQueryAsync();
 
         int row = 2;
-        int seq = 1; // 🔥 INI KUNCI UTAMA
+        int seq = 1; 
 
         while (!ws.Cell(row, 1).IsEmpty())
         {
@@ -96,25 +95,24 @@ public async Task<IActionResult> Upload(IFormFile file)
             await cmd.ExecuteNonQueryAsync();
 
             row++;
-            seq++; // 🔥 AUTO URUT
+            seq++; 
         }
 
-        Console.WriteLine("✅ UPLOAD DATASHEET + SEQUENCE BERHASIL");
+        Console.WriteLine("UPLOAD DATASHEET + SEQUENCE BERHASIL");
 
         return Ok("Upload sukses + sequence");
     }
     catch (Exception ex)
     {
-        Console.WriteLine("❌ ERROR UPLOAD:");
+        Console.WriteLine("ERROR UPLOAD:");
         Console.WriteLine(ex.ToString());
 
         return StatusCode(500, ex.ToString());
     }
 }
 
-    // ================================
-    // ✅ GET DATA (DASHBOARD)
-    // ================================
+   
+    // GET DATA (DASHBOARD)
     [HttpGet]
     public async Task<IActionResult> Get()
     {

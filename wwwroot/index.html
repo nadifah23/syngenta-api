@@ -64,12 +64,13 @@
 <body>
 
 <div class="top-right">
-    Institut Teknologi Sepuluh Nopember Internship 2026
-</div>
+    Internship Teknik Instrumentasi
+    Institut Teknologi Sepuluh Nopember 2026
+    </div>
 
 <h2>QR Scanner Dashboard</h2>
 
-<!-- 🔥 UPLOAD -->
+<!--UPLOAD-->
 <input type="file" id="fileInput" />
 <button onclick="uploadFile()">Upload Datasheet</button>
 
@@ -84,7 +85,7 @@
     <div class="card failed">FAILED<br><span id="failedCount">0</span></div>
 </div>
 
-<!-- 🔥 3 TABLE -->
+<!-- 3 TABLE -->
 <div class="tables">
 
     <!-- CAMERA 1 -->
@@ -215,7 +216,7 @@ function downloadExcel() {
     window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export-excel");
 }
 
-// 🔥 UPLOAD
+// UPLOAD
 async function uploadFile() {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];

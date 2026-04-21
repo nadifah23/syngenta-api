@@ -19,13 +19,13 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// 🔥 default ke index.html
+// default ke index.html
 app.UseDefaultFiles(new DefaultFilesOptions
 {
     DefaultFileNames = new List<string> { "index.html" }
 });
 
-// 🔥 serve wwwroot
+// serve wwwroot
 app.UseStaticFiles();
 
 // CORS
@@ -34,7 +34,7 @@ app.UseCors("AllowAll");
 // Routing API
 app.MapControllers();
 
-// 🔥 FIX PORT (Railway + lokal)
+// FIX PORT (Railway + lokal)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
 app.Urls.Add($"http://0.0.0.0:{port}");
 
