@@ -138,60 +138,86 @@ public class ScanResultsController : ControllerBase
     // 📥 EXPORT EXCEL (FIX URUTAN)
     // ================================
     [HttpGet("export-excel")]
-    public async Task<IActionResult> ExportExcel()
+public async Task<IActionResult> ExportExcel()
+{
+    try
     {
-        try
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Scan Results");
+
+        // HEADER SESUAI GAMBAR KANAN
+        ws.Cell(1, 1).Value = "Time";
+        ws.Cell(1, 2).Value = "Camera 1";
+        ws.Cell(1, 3).Value = "Match/No Match";
+        ws.Cell(1, 4).Value = "Camera 2";
+        ws.Cell(1, 5).Value = "Match/No Match";
+        ws.Cell(1, 6).Value = "Code dari Excel";
+        ws.Cell(1, 7).Value = "Hasil Pair";
+
+        await using var conn = new NpgsqlConnection(_conn);
+        await conn.OpenAsync();
+
+        // ambil data terbaru (ascending biar urut)
+        var cmd = new NpgsqlCommand(@"
+            SELECT scan_time, camera_id, qr_code, status 
+            FROM scan_results 
+            ORDER BY id ASC", conn);
+
+        await using var reader = await cmd.ExecuteReaderAsync();
+
+        var list = new List<dynamic>();
+
+        while (await reader.ReadAsync())
         {
-            using var workbook = new XLWorkbook();
-            var ws = workbook.Worksheets.Add("Scan Results");
-
-            // header
-            ws.Cell(1, 1).Value = "ID";
-            ws.Cell(1, 2).Value = "Time";
-            ws.Cell(1, 3).Value = "Camera";
-            ws.Cell(1, 4).Value = "QR";
-            ws.Cell(1, 5).Value = "Status";
-
-            await using var conn = new NpgsqlConnection(_conn);
-            await conn.OpenAsync();
-
-            // 🔥 PENTING: samain dengan dashboard
-            var cmd = new NpgsqlCommand(
-                "SELECT id, scan_time, camera_id, qr_code, status FROM scan_results ORDER BY id DESC",
-                conn
-            );
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-
-            int row = 2;
-
-            while (await reader.ReadAsync())
+            list.Add(new
             {
-                ws.Cell(row, 1).Value = reader.GetInt32(0);
-                ws.Cell(row, 2).Value = reader.GetDateTime(1);
-                ws.Cell(row, 3).Value = reader.GetString(2);
-                ws.Cell(row, 4).Value = reader.IsDBNull(3) ? "-" : reader.GetString(3);
-                ws.Cell(row, 5).Value = reader.GetString(4);
-
-                row++;
-            }
-
-            // auto width biar rapi
-            ws.Columns().AdjustToContents();
-
-            using var stream = new MemoryStream();
-            workbook.SaveAs(stream);
-            stream.Position = 0;
-
-            return File(
-                stream.ToArray(),
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "scan_results.xlsx"
-            );
+                time = reader.GetDateTime(0),
+                camera = reader.GetString(1),
+                qr = reader.IsDBNull(2) ? null : reader.GetString(2),
+                status = reader.GetString(3)
+            });
         }
-        catch (Exception ex)
+
+        int rowExcel = 2;
+
+        for (int i = 0; i < list.Count - 2; i++)
         {
-            return StatusCode(500, ex.Message);
+            var cam1 = list[i];
+            var cam2 = list[i + 1];
+            var pair = list[i + 2];
+
+            if (cam1.camera == "CAMERA-01" &&
+                cam2.camera == "CAMERA-02" &&
+                pair.camera == "PAIR")
+            {
+                ws.Cell(rowExcel, 1).Value = cam1.time;
+                ws.Cell(rowExcel, 2).Value = cam1.qr;
+                ws.Cell(rowExcel, 3).Value = cam1.status;
+
+                ws.Cell(rowExcel, 4).Value = cam2.qr;
+                ws.Cell(rowExcel, 5).Value = cam2.status;
+
+                ws.Cell(rowExcel, 6).Value = pair.qr;
+                ws.Cell(rowExcel, 7).Value = pair.status;
+
+                rowExcel++;
+                i += 2; // skip ke pair berikutnya
+            }
         }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Position = 0;
+
+        return File(
+            stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "scan_results.xlsx"
+        );
     }
+    catch (Exception ex)
+    {
+        return StatusCode(500, ex.Message);
+    }
+}
 }
