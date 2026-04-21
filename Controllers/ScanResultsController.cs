@@ -109,7 +109,7 @@ public class ScanResultsController : ControllerBase
             await using var conn = new NpgsqlConnection(_conn);
             await conn.OpenAsync();
 
-            var sql = "SELECT id, scan_time, camera_id, qr_code, status FROM scan_results ORDER BY id DESC";
+            var sql = "SELECT id, scan_time, camera_id, qr_code, status FROM scan_results ORDER BY id ASC";
 
             await using var cmd = new NpgsqlCommand(sql, conn);
             await using var reader = await cmd.ExecuteReaderAsync();
