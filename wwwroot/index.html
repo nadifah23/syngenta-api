@@ -60,7 +60,6 @@
 
 <h2>QR Scanner Dashboard</h2>
 
-<!--UPLOAD-->
 <input type="file" id="fileInput" />
 <button onclick="uploadFile()">Upload Datasheet</button>
 
@@ -75,7 +74,6 @@
     <div class="card failed">FAILED<br><span id="failedCount">0</span></div>
 </div>
 
-<!-- 🔥 TABLE BARU (PAIR FORMAT) -->
 <table id="table">
     <thead>
         <tr>
@@ -99,7 +97,10 @@ window.onload = function () {
 
 async function loadData() {
     try {
-        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults");
+        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults", {
+            cache: "no-store"
+        });
+
         const data = await res.json();
 
         const tbody = document.querySelector("#table tbody");
@@ -107,36 +108,48 @@ async function loadData() {
 
         let match = 0, notmatch = 0, failed = 0;
 
-        for (let i = 0; i < data.length - 2; i++) {
-            const cam1 = data[i + 2];
-            const cam2 = data[i + 1];
-            const pair = data[i];
+        // 🔥 ambil hanya PAIR
+        const pairs = data.filter(x => x.camera === "PAIR");
 
-            if (
-                cam1.camera === "CAMERA-01" &&
-                cam2.camera === "CAMERA-02" &&
-                pair.camera === "PAIR"
-            ) {
-                if (pair.status === "MATCH") match++;
-                else if (pair.status === "NOT MATCH") notmatch++;
-                else failed++;
+        for (let pair of pairs) {
 
-                const row = `
-                    <tr>
-                        <td>${new Date(pair.time).toLocaleString('id-ID')}</td>
-                        <td>${cam1.qr ?? '-'}</td>
-                        <td>${cam1.status}</td>
-                        <td>${cam2.qr ?? '-'}</td>
-                        <td>${cam2.status}</td>
-                        <td>${pair.qr ?? '-'}</td>
-                        <td>${pair.status}</td>
-                    </tr>
-                `;
+            // 🔥 cari scan sebelum pair (berdasarkan waktu)
+            const related = data
+                .filter(x =>
+                    x.camera !== "PAIR" &&
+                    new Date(x.time) <= new Date(pair.time)
+                )
+                .slice(0, 10);
 
-                tbody.innerHTML += row;
+            const cam1 = related.find(x => x.camera === "CAMERA-01");
+            const cam2 = related.find(x => x.camera === "CAMERA-02");
 
-                i += 2;
-            }
+            if (!cam1 || !cam2) continue;
+
+            // HITUNG
+            if (pair.status === "MATCH") match++;
+            else if (pair.status === "NOT MATCH") notmatch++;
+            else failed++;
+
+            const color =
+                pair.status === "MATCH" ? "green" :
+                pair.status === "NOT MATCH" ? "red" : "gray";
+
+            const row = `
+                <tr>
+                    <td>${new Date(pair.time).toLocaleString('id-ID')}</td>
+                    <td>${cam1.qr ?? '-'}</td>
+                    <td>${cam1.status}</td>
+                    <td>${cam2.qr ?? '-'}</td>
+                    <td>${cam2.status}</td>
+                    <td>${pair.qr ?? '-'}</td>
+                    <td style="color:${color}; font-weight:bold;">
+                        ${pair.status}
+                    </td>
+                </tr>
+            `;
+
+            tbody.innerHTML += row;
         }
 
         document.getElementById("matchCount").innerText = match;
@@ -156,7 +169,6 @@ function downloadExcel() {
     window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export-excel");
 }
 
-// UPLOAD
 async function uploadFile() {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
