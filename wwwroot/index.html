@@ -202,7 +202,7 @@ async function uploadFile() {
     formData.append("file", file);
 
     try {
-        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults/upload", {
+        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults/upload-txt", {
             method: "POST",
             body: formData
         });

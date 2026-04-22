@@ -65,57 +65,52 @@ public class ScanResultsController : ControllerBase
         }
     }
 
-    // ================================
-    // 🔥 UPLOAD DATASHEET + SEQUENCE
-    // ================================
-    [HttpPost("upload")]
-    public async Task<IActionResult> Upload(IFormFile file)
+    [HttpPost("upload-txt")]
+public async Task<IActionResult> UploadTxt(IFormFile file)
+{
+    try
     {
-        try
+        if (file == null || file.Length == 0)
+            return BadRequest("File kosong");
+
+        using var reader = new StreamReader(file.OpenReadStream());
+
+        await using var conn = new NpgsqlConnection(_conn);
+        await conn.OpenAsync();
+
+        // hapus data lama
+        var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
+        await clear.ExecuteNonQueryAsync();
+
+        int seq = 1;
+
+        while (!reader.EndOfStream)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest("File kosong");
+            var line = await reader.ReadLineAsync();
 
-            using var stream = new MemoryStream();
-            await file.CopyToAsync(stream);
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
 
-            using var workbook = new XLWorkbook(stream);
-            var ws = workbook.Worksheet(1);
+            var cmd = new NpgsqlCommand(
+                "INSERT INTO qr_references (qr_code, sequence) VALUES (@qr, @seq)",
+                conn
+            );
 
-            await using var conn = new NpgsqlConnection(_conn);
-            await conn.OpenAsync();
+            cmd.Parameters.AddWithValue("@qr", line.Trim());
+            cmd.Parameters.AddWithValue("@seq", seq);
 
-            var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
-            await clear.ExecuteNonQueryAsync();
+            await cmd.ExecuteNonQueryAsync();
 
-            int row = 2;
-            int seq = 1;
-
-            while (!ws.Cell(row, 1).IsEmpty())
-            {
-                var qr = ws.Cell(row, 1).GetString();
-
-                var cmd = new NpgsqlCommand(
-                    "INSERT INTO qr_references (qr_code, sequence) VALUES (@qr, @seq)",
-                    conn
-                );
-
-                cmd.Parameters.AddWithValue("@qr", qr);
-                cmd.Parameters.AddWithValue("@seq", seq);
-
-                await cmd.ExecuteNonQueryAsync();
-
-                row++;
-                seq++;
-            }
-
-            return Ok("Upload sukses + sequence");
+            seq++;
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, ex.ToString());
-        }
+
+        return Ok("Upload TXT sukses + sequence");
     }
+    catch (Exception ex)
+    {
+        return StatusCode(500, ex.ToString());
+    }
+}
 
     // ================================
     // ✅ GET DATA
