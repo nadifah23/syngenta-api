@@ -67,6 +67,7 @@
 
 <button onclick="downloadCSV()">Download CSV</button>
 <button onclick="downloadExcel()">Download Excel</button>
+<button onclick="clearData()" style="background:red;color:white;">Hapus History</button>
 
 <div style="margin-top:20px;">
     <div class="card match">MATCH<br><span id="matchCount">0</span></div>
@@ -101,7 +102,8 @@ async function loadData() {
             cache: "no-store"
         });
 
-        const data = await res.json();
+        // 🔥 terbaru di atas
+        const data = (await res.json()).reverse();
 
         const tbody = document.querySelector("#table tbody");
         tbody.innerHTML = "";
@@ -113,13 +115,11 @@ async function loadData() {
 
         for (let pair of pairs) {
 
-            // 🔥 cari scan sebelum pair (berdasarkan waktu)
-            const related = data
-                .filter(x =>
-                    x.camera !== "PAIR" &&
-                    new Date(x.time) <= new Date(pair.time)
-                )
-                .slice(0, 10);
+            // 🔥 cari 2 scan terakhir sebelum pair (lebih stabil)
+            const related = data.filter(x =>
+                x.camera !== "PAIR" &&
+                new Date(x.time) <= new Date(pair.time)
+            );
 
             const cam1 = related.find(x => x.camera === "CAMERA-01");
             const cam2 = related.find(x => x.camera === "CAMERA-02");
@@ -169,6 +169,26 @@ function downloadExcel() {
     window.open("https://syngenta-api-production.up.railway.app/api/scanresults/export-excel");
 }
 
+// 🔥 CLEAR DATA
+async function clearData() {
+    if (!confirm("Yakin mau hapus semua data?")) return;
+
+    try {
+        const res = await fetch("https://syngenta-api-production.up.railway.app/api/scanresults/clear", {
+            method: "DELETE"
+        });
+
+        const text = await res.text();
+        alert(text);
+
+        loadData();
+    } catch (err) {
+        console.error(err);
+        alert("Gagal hapus data!");
+    }
+}
+
+// UPLOAD
 async function uploadFile() {
     const fileInput = document.getElementById("fileInput");
     const file = fileInput.files[0];
