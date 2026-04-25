@@ -1,6 +1,3 @@
-
-
-
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using ClosedXML.Excel;
@@ -47,7 +44,7 @@ public class ScanResultsController : ControllerBase
     }
 
     // ================================
-    // 🔥 DELETE ALL HISTORY (INI YANG BARU)
+    // 🔥 DELETE ALL HISTORY
     // ================================
     [HttpDelete("clear")]
     public async Task<IActionResult> ClearAll()
@@ -68,52 +65,47 @@ public class ScanResultsController : ControllerBase
         }
     }
 
+    // ================================
+    // ✅ UPLOAD TXT
+    // ================================
     [HttpPost("upload-txt")]
-public async Task<IActionResult> UploadTxt(IFormFile file)
-{
-    try
+    public async Task<IActionResult> UploadTxt(IFormFile file)
     {
-        if (file == null || file.Length == 0)
-            return BadRequest("File kosong");
-
-        using var reader = new StreamReader(file.OpenReadStream());
-
-        await using var conn = new NpgsqlConnection(_conn);
-        await conn.OpenAsync();
-
-        // hapus data lama
-        var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
-        await clear.ExecuteNonQueryAsync();
-
-        int seq = 1;
-
-        while (!reader.EndOfStream)
+        try
         {
-            var line = await reader.ReadLineAsync();
+            if (file == null || file.Length == 0)
+                return BadRequest("File kosong");
 
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+            using var reader = new StreamReader(file.OpenReadStream());
 
-            var cmd = new NpgsqlCommand(
-                "INSERT INTO qr_references (qr_code, sequence) VALUES (@qr, @seq)",
-                conn
-            );
+            await using var conn = new NpgsqlConnection(_conn);
+            await conn.OpenAsync();
 
-            cmd.Parameters.AddWithValue("@qr", line.Trim());
-            cmd.Parameters.AddWithValue("@seq", seq);
+            var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
+            await clear.ExecuteNonQueryAsync();
 
-            await cmd.ExecuteNonQueryAsync();
+            int seq = 1;
 
-            seq++;
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                var cmd = new NpgsqlCommand(
+                    "INSERT INTO qr_references (qr_code, sequence) VALUES (@qr, @seq)", conn);
+                cmd.Parameters.AddWithValue("@qr", line.Trim());
+                cmd.Parameters.AddWithValue("@seq", seq);
+                await cmd.ExecuteNonQueryAsync();
+                seq++;
+            }
+
+            return Ok("Upload TXT sukses + sequence");
         }
-
-        return Ok("Upload TXT sukses + sequence");
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.ToString());
+        }
     }
-    catch (Exception ex)
-    {
-        return StatusCode(500, ex.ToString());
-    }
-}
 
     // ================================
     // ✅ GET DATA
@@ -154,24 +146,13 @@ public async Task<IActionResult> UploadTxt(IFormFile file)
     }
 
     // ================================
-    // 📥 EXPORT EXCEL
+    // ✅ EXPORT EXCEL — FIXED
     // ================================
     [HttpGet("export-excel")]
     public async Task<IActionResult> ExportExcel()
     {
         try
         {
-            using var workbook = new XLWorkbook();
-            var ws = workbook.Worksheets.Add("Scan Results");
-
-            ws.Cell(1, 1).Value = "Time";
-            ws.Cell(1, 2).Value = "Camera 1";
-            ws.Cell(1, 3).Value = "Match/No Match";
-            ws.Cell(1, 4).Value = "Camera 2";
-            ws.Cell(1, 5).Value = "Match/No Match";
-            ws.Cell(1, 6).Value = "Code dari Excel";
-            ws.Cell(1, 7).Value = "Hasil Pair";
-
             await using var conn = new NpgsqlConnection(_conn);
             await conn.OpenAsync();
 
@@ -182,45 +163,63 @@ public async Task<IActionResult> UploadTxt(IFormFile file)
 
             await using var reader = await cmd.ExecuteReaderAsync();
 
-            var list = new List<dynamic>();
+            var list = new List<(DateTime time, string camera, string? qr, string status)>();
 
             while (await reader.ReadAsync())
             {
-                list.Add(new
-                {
-                    time = reader.GetDateTime(0),
-                    camera = reader.GetString(1),
-                    qr = reader.IsDBNull(2) ? null : reader.GetString(2),
-                    status = reader.GetString(3)
-                });
+                list.Add((
+                    reader.GetDateTime(0),
+                    reader.GetString(1),
+                    reader.IsDBNull(2) ? null : reader.GetString(3),
+                    reader.GetString(3)
+                ));
             }
 
+            using var workbook = new XLWorkbook();
+            var ws = workbook.Worksheets.Add("Scan Results");
+
+            // Header
+            ws.Cell(1, 1).Value = "Time";
+            ws.Cell(1, 2).Value = "Camera 1";
+            ws.Cell(1, 3).Value = "Status Cam 1";
+            ws.Cell(1, 4).Value = "Camera 2";
+            ws.Cell(1, 5).Value = "Status Cam 2";
+            ws.Cell(1, 6).Value = "Code Excel";
+            ws.Cell(1, 7).Value = "Pair Result";
+
+            // ✅ Group by PAIR, cari cam1 & cam2 by timestamp terdekat
+            var pairs = list.Where(x => x.camera == "PAIR").ToList();
             int rowExcel = 2;
 
-            for (int i = 0; i < list.Count - 2; i++)
+            foreach (var pair in pairs)
             {
-                var cam1 = list[i];
-                var cam2 = list[i + 1];
-                var pair = list[i + 2];
+                var cam1 = list.FirstOrDefault(x =>
+                    x.camera == "CAMERA-01" &&
+                    Math.Abs((x.time - pair.time).TotalSeconds) < 10);
 
-                if (cam1.camera == "CAMERA-01" &&
-                    cam2.camera == "CAMERA-02" &&
-                    pair.camera == "PAIR")
-                {
-                    ws.Cell(rowExcel, 1).Value = cam1.time;
-                    ws.Cell(rowExcel, 2).Value = cam1.qr;
-                    ws.Cell(rowExcel, 3).Value = cam1.status;
+                var cam2 = list.FirstOrDefault(x =>
+                    x.camera == "CAMERA-02" &&
+                    Math.Abs((x.time - pair.time).TotalSeconds) < 10);
 
-                    ws.Cell(rowExcel, 4).Value = cam2.qr;
-                    ws.Cell(rowExcel, 5).Value = cam2.status;
+                ws.Cell(rowExcel, 1).Value = pair.time.ToString("yyyy-MM-dd HH:mm:ss");
+                ws.Cell(rowExcel, 2).Value = cam1.qr ?? "-";
+                ws.Cell(rowExcel, 3).Value = cam1 == default ? "-" : cam1.status;
+                ws.Cell(rowExcel, 4).Value = cam2.qr ?? "-";
+                ws.Cell(rowExcel, 5).Value = cam2 == default ? "-" : cam2.status;
+                ws.Cell(rowExcel, 6).Value = pair.qr ?? "-";
+                ws.Cell(rowExcel, 7).Value = pair.status;
 
-                    ws.Cell(rowExcel, 6).Value = pair.qr;
-                    ws.Cell(rowExcel, 7).Value = pair.status;
+                // Warna Pair Result
+                var cell = ws.Cell(rowExcel, 7);
+                if (pair.status == "MATCH")
+                    cell.Style.Font.FontColor = XLColor.Green;
+                else if (pair.status == "NOT MATCH")
+                    cell.Style.Font.FontColor = XLColor.Red;
 
-                    rowExcel++;
-                    i += 2;
-                }
+                rowExcel++;
             }
+
+            ws.Columns().AdjustToContents();
 
             using var stream = new MemoryStream();
             workbook.SaveAs(stream);
