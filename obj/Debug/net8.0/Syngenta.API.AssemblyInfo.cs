@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Syngenta.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d77857117ab1d3378e0771cbf862fbd1d36afd0a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+be8842efe81994edb27581a31f312494c5261d1e")]
 [assembly: System.Reflection.AssemblyProductAttribute("Syngenta.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Syngenta.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
