@@ -170,10 +170,10 @@ public class ScanResultsController : ControllerBase
                 list.Add((
                     reader.GetDateTime(0),
                     reader.GetString(1),
-                    reader.IsDBNull(2) ? null : reader.GetString(3),
+                    reader.IsDBNull(2) ? null : reader.GetString(2), // ✅ fix index 2
                     reader.GetString(3)
                 ));
-            }
+            }       
 
             using var workbook = new XLWorkbook();
             var ws = workbook.Worksheets.Add("Scan Results");
