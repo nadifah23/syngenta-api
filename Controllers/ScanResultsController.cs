@@ -66,7 +66,7 @@ public class ScanResultsController : ControllerBase
     }
 
     // ================================
-    // ✅ UPLOAD TXT
+    // ✅ UPLOAD TXT — BULK INSERT
     // ================================
     [HttpPost("upload-txt")]
     public async Task<IActionResult> UploadTxt(IFormFile file)
@@ -78,28 +78,35 @@ public class ScanResultsController : ControllerBase
 
             using var reader = new StreamReader(file.OpenReadStream());
 
-            await using var conn = new NpgsqlConnection(_conn);
-            await conn.OpenAsync();
-
-            var clear = new NpgsqlCommand("DELETE FROM qr_references", conn);
-            await clear.ExecuteNonQueryAsync();
-
-            int seq = 1;
-
+            // Baca semua baris dulu
+            var lines = new List<string>();
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
-                if (string.IsNullOrWhiteSpace(line)) continue;
-
-                var cmd = new NpgsqlCommand(
-                    "INSERT INTO qr_references (qr_code, sequence) VALUES (@qr, @seq)", conn);
-                cmd.Parameters.AddWithValue("@qr", line.Trim());
-                cmd.Parameters.AddWithValue("@seq", seq);
-                await cmd.ExecuteNonQueryAsync();
-                seq++;
+                if (!string.IsNullOrWhiteSpace(line))
+                    lines.Add(line.Trim());
             }
 
-            return Ok("Upload TXT sukses + sequence");
+            await using var conn = new NpgsqlConnection(_conn);
+            await conn.OpenAsync();
+
+            // Hapus data lama
+            await new NpgsqlCommand("DELETE FROM qr_references", conn).ExecuteNonQueryAsync();
+
+            // ✅ Bulk insert pakai COPY — jauh lebih cepat dari insert satu per satu
+            using var writer = conn.BeginBinaryImport(
+                "COPY qr_references (qr_code, sequence) FROM STDIN (FORMAT BINARY)");
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                writer.StartRow();
+                writer.Write(lines[i]);
+                writer.Write(i + 1);
+            }
+
+            await writer.CompleteAsync();
+
+            return Ok($"Upload sukses! {lines.Count} data berhasil diimport.");
         }
         catch (Exception ex)
         {
@@ -173,7 +180,7 @@ public class ScanResultsController : ControllerBase
                     reader.IsDBNull(2) ? null : reader.GetString(2), // ✅ fix index 2
                     reader.GetString(3)
                 ));
-            }       
+            }
 
             using var workbook = new XLWorkbook();
             var ws = workbook.Worksheets.Add("Scan Results");
